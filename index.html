@@ -1,537 +1,449 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Animated EMI Calculator</title>
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap"
-      rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+    
     <style>
-      :root {
-        --primary: #4f46e5;
-        --secondary: #818cf8;
-        --success: #10b981;
-        --bg: #f8fafc;
-        --surface: #ffffff;
-        --text-main: #1e293b;
-        --text-muted: #64748b;
-        --border: #e2e8f0;
-      }
-
-      * {
-        box-sizing: border-box;
-        outline: none;
-      }
-
-      body {
-        font-family: "Inter", sans-serif;
-        background-color: var(--bg);
-        color: var(--text-main);
-        margin: 0;
-        padding: 20px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 100vh;
-      }
-
-      /* --- Animation Keyframes --- */
-      @keyframes fadeIn {
-        from {
-          opacity: 0;
-          transform: translateY(10px);
+        :root {
+            --primary: #4f46e5;
+            --secondary: #818cf8;
+            --success: #10b981;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
         }
-        to {
-          opacity: 1;
-          transform: translateY(0);
+
+        * { box-sizing: border-box; outline: none; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
         }
-      }
 
-      @keyframes slideInRight {
-        from {
-          opacity: 0;
-          transform: translateX(20px);
+        /* --- Animation Keyframes --- */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-        to {
-          opacity: 1;
-          transform: translateX(0);
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
         }
-      }
 
-      .app-container {
-        width: 100%;
-        /* Initial State: Compact & Centered */
-        max-width: 420px;
-        background: var(--surface);
-        border-radius: 20px;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
-        display: grid;
-        grid-template-columns: 1fr; /* Initially 1 column */
-        overflow: hidden;
-        transition: all 0.6s cubic-bezier(0.25, 1, 0.5, 1); /* Smooth expansion */
-      }
-
-      /* State when results are shown */
-      .app-container.show-result {
-        max-width: 1000px;
-        grid-template-columns: 1fr 1.4fr; /* Split into two columns */
-      }
-
-      /* --- Left Panel: Inputs --- */
-      .input-panel {
-        padding: 35px;
-        background: #fafafa;
-        z-index: 2;
-        transition: border-right 0.3s;
-      }
-
-      .app-container.show-result .input-panel {
-        border-right: 1px solid var(--border);
-      }
-
-      h2 {
-        margin: 0 0 25px 0;
-        font-size: 1.4rem;
-        color: var(--primary);
-        font-weight: 700;
-        display: flex;
-        align-items: center;
-        justify-content: center; /* Center title initially */
-        gap: 10px;
-        transition: justify-content 0.3s;
-      }
-
-      .app-container.show-result h2 {
-        justify-content: flex-start; /* Left align when expanded */
-      }
-
-      .form-group {
-        margin-bottom: 18px;
-      }
-
-      label {
-        display: block;
-        font-size: 0.85rem;
-        font-weight: 600;
-        color: var(--text-muted);
-        margin-bottom: 8px;
-        transition: color 0.3s;
-      }
-
-      .form-group:hover label {
-        color: var(--primary);
-      }
-
-      input,
-      select {
-        width: 100%;
-        padding: 12px;
-        border: 1px solid var(--border);
-        border-radius: 10px;
-        font-size: 0.95rem;
-        font-family: inherit;
-        background: var(--surface);
-        transition: all 0.3s ease;
-      }
-
-      input:focus,
-      select:focus {
-        border-color: var(--primary);
-        box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
-        transform: translateY(-1px);
-      }
-
-      /* Validation Error Style */
-      input.error {
-        border-color: #ef4444;
-        animation: shake 0.3s;
-      }
-      @keyframes shake {
-        0%,
-        100% {
-          transform: translateX(0);
-        }
-        25% {
-          transform: translateX(-5px);
-        }
-        75% {
-          transform: translateX(5px);
-        }
-      }
-
-      .input-group-row {
-        display: flex;
-        gap: 10px;
-      }
-
-      .btn-primary {
-        width: 100%;
-        padding: 14px;
-        background: var(--primary);
-        color: white;
-        border: none;
-        border-radius: 10px;
-        font-weight: 600;
-        font-size: 1rem;
-        cursor: pointer;
-        margin-top: 15px;
-        transition: all 0.3s;
-      }
-
-      .btn-primary:hover {
-        background: #4338ca;
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3);
-      }
-
-      /* Reset Button Style */
-      .btn-secondary {
-        width: 100%;
-        padding: 12px;
-        background: transparent;
-        color: var(--text-muted);
-        border: 1px solid var(--border);
-        border-radius: 10px;
-        font-weight: 600;
-        font-size: 0.95rem;
-        cursor: pointer;
-        margin-top: 10px;
-        transition: all 0.2s;
-      }
-
-      .btn-secondary:hover {
-        background: #e2e8f0;
-        color: var(--text-main);
-        border-color: #cbd5e1;
-      }
-
-      /* --- Right Panel: Results --- */
-      .result-panel {
-        padding: 30px;
-        display: none; /* Hidden Initially */
-        flex-direction: column;
-        background: var(--surface);
-        opacity: 0;
-      }
-
-      /* Show results logic */
-      .app-container.show-result .result-panel {
-        display: flex;
-        animation: slideInRight 0.6s forwards 0.3s; /* Delay to wait for expansion */
-      }
-
-      /* Stats Strip */
-      .stats-strip {
-        display: grid;
-        grid-template-columns: 1fr 1fr 1fr;
-        gap: 10px;
-        background: #f8fafc;
-        padding: 15px;
-        border-radius: 12px;
-        border: 1px solid var(--border);
-        margin-bottom: 20px;
-      }
-
-      .stat-item {
-        text-align: center;
-        padding: 5px;
-      }
-
-      .stat-item:not(:last-child) {
-        border-right: 1px solid var(--border);
-      }
-
-      .stat-label {
-        font-size: 0.7rem;
-        color: var(--text-muted);
-        text-transform: uppercase;
-        letter-spacing: 0.8px;
-        font-weight: 600;
-      }
-      .stat-value {
-        font-size: 1.05rem;
-        font-weight: 700;
-        color: var(--text-main);
-        margin-top: 6px;
-      }
-      .stat-value.highlight {
-        color: var(--primary);
-        font-size: 1.2rem;
-      }
-
-      /* Chart Area */
-      .chart-wrapper {
-        flex: 0 0 auto;
-        height: 180px;
-        display: flex;
-        justify-content: center;
-        margin-bottom: 20px;
-      }
-
-      /* Table Controls */
-      .table-controls {
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-        margin-bottom: 10px;
-        gap: 10px;
-      }
-
-      .table-controls label {
-        margin: 0;
-        font-size: 0.8rem;
-      }
-
-      .table-controls input {
-        width: 60px;
-        padding: 6px;
-        font-size: 0.85rem;
-      }
-
-      /* Table Area */
-      .table-wrapper {
-        flex: 1;
-        overflow-y: auto;
-        border: 1px solid var(--border);
-        border-radius: 10px;
-        max-height: 280px;
-        background: #fff;
-      }
-
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.85rem;
-      }
-
-      th {
-        position: sticky;
-        top: 0;
-        background: #f1f5f9;
-        z-index: 10;
-        padding: 10px;
-        text-align: left;
-        font-weight: 600;
-        color: var(--text-muted);
-        border-bottom: 2px solid var(--border);
-      }
-
-      td {
-        padding: 8px 10px;
-        border-bottom: 1px solid var(--border);
-        color: var(--text-main);
-      }
-
-      tbody tr {
-        animation: fadeIn 0.4s ease-out;
-      }
-      tbody tr:hover td {
-        background-color: #eef2ff;
-      }
-      tr:last-child td {
-        border-bottom: none;
-      }
-
-      /* Pagination */
-      .pagination-mini {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: 15px;
-        padding-top: 15px;
-        border-top: 1px solid var(--border);
-        font-size: 0.85rem;
-      }
-
-      .page-btn {
-        background: white;
-        border: 1px solid var(--border);
-        padding: 6px 14px;
-        border-radius: 6px;
-        cursor: pointer;
-      }
-      .page-btn:hover:not(:disabled) {
-        border-color: var(--primary);
-        color: var(--primary);
-      }
-      .page-btn:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-      }
-
-      /* --- Responsive --- */
-      @media (max-width: 768px) {
         .app-container {
-          max-width: 100%;
-          margin-top: 20px;
-          transition: none;
+            width: 100%;
+            /* Initial State: Compact & Centered */
+            max-width: 420px; 
+            background: var(--surface);
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+            display: grid;
+            grid-template-columns: 1fr; /* Initially 1 column */
+            overflow: hidden;
+            transition: all 0.6s cubic-bezier(0.25, 1, 0.5, 1); /* Smooth expansion */
         }
-        .app-container.show-result {
-          grid-template-columns: 1fr;
-        } /* Stack on mobile */
-        .input-panel {
-          border-right: none;
-          border-bottom: 1px solid var(--border);
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div class="app-container" id="appContainer">
-      <!-- LEFT: INPUTS -->
-      <div class="input-panel">
-        <h2>
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <rect x="2" y="5" width="20" height="14" rx="2" />
-            <line x1="2" y1="10" x2="22" y2="10" />
-          </svg>
-          EMI Calculator
-        </h2>
 
+        /* State when results are shown */
+        .app-container.show-result {
+            max-width: 1000px;
+            grid-template-columns: 1fr 1.4fr; /* Split into two columns */
+        }
+
+        /* --- Left Panel: Inputs --- */
+        .input-panel {
+            padding: 35px;
+            background: #fafafa;
+            z-index: 2;
+            transition: border-right 0.3s;
+        }
+        
+        .app-container.show-result .input-panel {
+            border-right: 1px solid var(--border);
+        }
+
+        h2 {
+            margin: 0 0 25px 0;
+            font-size: 1.4rem;
+            color: var(--primary);
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center; /* Center title initially */
+            gap: 10px;
+            transition: justify-content 0.3s;
+        }
+
+        .app-container.show-result h2 {
+            justify-content: flex-start; /* Left align when expanded */
+        }
+
+        .form-group { margin-bottom: 18px; }
+        
+        label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            transition: color 0.3s;
+        }
+
+        .form-group:hover label { color: var(--primary); }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            background: var(--surface);
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+            transform: translateY(-1px);
+        }
+        
+        /* Validation Error Style */
+        input.error { border-color: #ef4444; animation: shake 0.3s; }
+        @keyframes shake { 0%, 100% {transform: translateX(0);} 25% {transform: translateX(-5px);} 75% {transform: translateX(5px);} }
+
+        .input-group-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 14px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: all 0.3s;
+        }
+
+        .btn-primary:hover {
+            background: #4338ca;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3);
+        }
+
+        /* Reset Button Style */
+        .btn-secondary {
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
+            color: var(--text-main);
+            border-color: #cbd5e1;
+        }
+
+        /* --- Right Panel: Results --- */
+        .result-panel {
+            padding: 30px;
+            display: none; /* Hidden Initially */
+            flex-direction: column;
+            background: var(--surface);
+            opacity: 0;
+        }
+
+        /* Show results logic */
+        .app-container.show-result .result-panel {
+            display: flex;
+            animation: slideInRight 0.6s forwards 0.3s; /* Delay to wait for expansion */
+        }
+
+        /* Stats Strip - Updated for 4 items */
+        .stats-strip {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); /* 4 Columns */
+            gap: 0; /* Remove gap to use borders */
+            background: #f8fafc;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .stat-item { 
+            text-align: center; 
+            padding: 15px 5px;
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .stat-item:last-child { border-right: none; }
+        
+        .stat-label { 
+            font-size: 0.65rem; 
+            color: var(--text-muted); 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px; 
+            font-weight: 600;
+            margin-bottom: 5px;
+            line-height: 1.2;
+        }
+        .stat-value { font-size: 0.95rem; font-weight: 700; color: var(--text-main); }
+        .stat-value.highlight { color: var(--primary); font-size: 1.1rem; }
+
+        /* Chart Area */
+        .chart-wrapper {
+            flex: 0 0 auto;
+            height: 180px;
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        /* Table Controls */
+        .table-controls {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-bottom: 10px;
+            gap: 10px;
+        }
+        
+        .table-controls label {
+            margin: 0;
+            font-size: 0.8rem;
+        }
+
+        .table-controls input {
+            width: 60px;
+            padding: 6px;
+            font-size: 0.85rem;
+        }
+
+        /* Table Area */
+        .table-wrapper {
+            flex: 1;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            max-height: 280px;
+            background: #fff;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        th { 
+            position: sticky; 
+            top: 0; 
+            background: #f1f5f9; 
+            z-index: 10; 
+            padding: 10px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-muted);
+            border-bottom: 2px solid var(--border);
+        }
+
+        td { 
+            padding: 8px 10px; 
+            border-bottom: 1px solid var(--border);
+            color: var(--text-main);
+        }
+        
+        tbody tr { animation: fadeIn 0.4s ease-out; }
+        tbody tr:hover td { background-color: #eef2ff; }
+        tr:last-child td { border-bottom: none; }
+
+        /* Pagination */
+        .pagination-mini {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border);
+            font-size: 0.85rem;
+        }
+
+        .page-btn {
+            background: white;
+            border: 1px solid var(--border);
+            padding: 6px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .page-btn:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
+        .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* --- Responsive --- */
+        @media (max-width: 768px) {
+            .app-container { max-width: 100%; margin-top: 20px; transition: none; }
+            .app-container.show-result { grid-template-columns: 1fr; } /* Stack on mobile */
+            .input-panel { border-right: none; border-bottom: 1px solid var(--border); }
+            
+            /* Responsive Stats Grid */
+            .stats-strip {
+                grid-template-columns: 1fr 1fr; /* 2x2 on mobile */
+            }
+            .stat-item:nth-child(2) { border-right: none; } /* Remove border for 2nd item in row 1 */
+            .stat-item:nth-child(1), .stat-item:nth-child(2) { border-bottom: 1px solid var(--border); } /* Add bottom border */
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container" id="appContainer">
+    <!-- LEFT: INPUTS -->
+    <div class="input-panel">
+        <h2>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+            EMI Calculator
+        </h2>
+        
         <!-- Note: No default values -->
         <div class="form-group">
-          <label>Loan Amount (₹)</label>
-          <input type="number" id="amount" placeholder="e.g. 500000" />
+            <label>Loan Amount (₹)</label>
+            <input type="number" id="amount" placeholder="e.g. 500000">
         </div>
 
         <div class="form-group">
-          <label>Interest Rate (% p.a)</label>
-          <input type="number" id="rate" placeholder="e.g. 9.5" step="0.1" />
+            <label>Interest Rate (% p.a)</label>
+            <input type="number" id="rate" placeholder="e.g. 9.5" step="0.1">
         </div>
 
         <div class="form-group">
-          <label>Duration</label>
-          <div class="input-group-row">
-            <input
-              type="number"
-              id="duration"
-              placeholder="e.g. 2"
-              style="flex: 2"
-            />
-            <select id="durationUnit" style="flex: 1">
-              <option value="year">Years</option>
-              <option value="month">Months</option>
+            <label>Duration</label>
+            <div class="input-group-row">
+                <input type="number" id="duration" placeholder="e.g. 2" style="flex: 2;">
+                <select id="durationUnit" style="flex: 1;">
+                    <option value="year">Years</option>
+                    <option value="month">Months</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Interest Type</label>
+            <select id="type">
+                <option value="compound">Reducing Balance</option>
+                <option value="simple">Simple Interest</option>
             </select>
-          </div>
         </div>
 
-        <div class="form-group">
-          <label>Interest Type</label>
-          <select id="type">
-            <option value="compound">Reducing Balance</option>
-            <option value="simple">Simple Interest</option>
-          </select>
-        </div>
-
-        <button class="btn-primary" onclick="triggerCalculation()">
-          Calculate EMI
-        </button>
+        <button class="btn-primary" onclick="triggerCalculation()">Calculate EMI</button>
         <!-- Reset Button added -->
         <button class="btn-secondary" onclick="resetCalculator()">Reset</button>
-      </div>
+    </div>
 
-      <!-- RIGHT: RESULTS (Hidden Initially) -->
-      <div class="result-panel" id="resultPanel">
+    <!-- RIGHT: RESULTS (Hidden Initially) -->
+    <div class="result-panel" id="resultPanel">
         <!-- Compact Stats Strip -->
         <div class="stats-strip">
-          <div class="stat-item">
-            <div class="stat-label">Monthly EMI</div>
-            <div class="stat-value highlight" id="dispEMI">-</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-label">Total Interest</div>
-            <div class="stat-value" id="dispInterest" style="color: #ef4444">
-              -
+            <div class="stat-item">
+                <div class="stat-label">Monthly EMI</div>
+                <div class="stat-value highlight" id="dispEMI">-</div>
             </div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-label">Total Amount</div>
-            <div class="stat-value" id="dispTotal">-</div>
-          </div>
+            <div class="stat-item">
+                <div class="stat-label">Avg. Monthly Int.</div>
+                <div class="stat-value" id="dispAvgInt" style="color: #f59e0b;">-</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Total Interest</div>
+                <div class="stat-value" id="dispInterest" style="color: #ef4444;">-</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Total Amount</div>
+                <div class="stat-value" id="dispTotal">-</div>
+            </div>
         </div>
 
         <!-- Small Chart -->
         <div class="chart-wrapper">
-          <canvas id="emiChart"></canvas>
+            <canvas id="emiChart"></canvas>
         </div>
 
         <!-- Table Controls (New Location) -->
         <div class="table-controls">
-          <label for="rowsPerPage">Rows/Page:</label>
-          <input
-            type="number"
-            id="rowsPerPage"
-            value="6"
-            min="1"
-            onchange="updateRows()"
-          />
+            <label for="rowsPerPage">Rows/Page:</label>
+            <input type="number" id="rowsPerPage" value="6" min="1" onchange="updateRows()">
         </div>
 
         <!-- Compact Table -->
         <div class="table-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th>Mon</th>
-                <th>Principal</th>
-                <th>Interest</th>
-                <th>Balance</th>
-              </tr>
-            </thead>
-            <tbody id="tableBody">
-              <!-- Rows generated by JS -->
-            </tbody>
-          </table>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Mon</th>
+                        <th>Principal</th>
+                        <th>Interest</th>
+                        <th>Balance</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Rows generated by JS -->
+                </tbody>
+            </table>
         </div>
 
         <!-- Mini Pagination -->
         <div class="pagination-mini">
-          <button class="page-btn" onclick="changePage(-1)" id="btnPrev">
-            Prev
-          </button>
-          <span id="pageInfo">Page 1</span>
-          <button class="page-btn" onclick="changePage(1)" id="btnNext">
-            Next
-          </button>
+            <button class="page-btn" onclick="changePage(-1)" id="btnPrev">Prev</button>
+            <span id="pageInfo">Page 1</span>
+            <button class="page-btn" onclick="changePage(1)" id="btnNext">Next</button>
         </div>
-      </div>
     </div>
+</div>
 
-    <script>
-      let chartInstance = null;
-      let allData = [];
-      let currentPage = 1;
-      let rowsPerPage = 6; // Default set to 6
+<script>
+    let chartInstance = null;
+    let allData = [];
+    let currentPage = 1;
+    let rowsPerPage = 6; // Default set to 6
 
-      const fmt = (n) =>
-        new Intl.NumberFormat("en-IN", {
-          style: "currency",
-          currency: "INR",
-          maximumFractionDigits: 0,
-        }).format(n);
+    const fmt = (n) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n);
 
-      function triggerCalculation() {
-        const amountInput = document.getElementById("amount");
-        const rateInput = document.getElementById("rate");
-        const durationInput = document.getElementById("duration");
+    function triggerCalculation() {
+        const amountInput = document.getElementById('amount');
+        const rateInput = document.getElementById('rate');
+        const durationInput = document.getElementById('duration');
 
         // Reset Error Styles
-        [amountInput, rateInput, durationInput].forEach((el) =>
-          el.classList.remove("error")
-        );
+        [amountInput, rateInput, durationInput].forEach(el => el.classList.remove('error'));
 
         const P = parseFloat(amountInput.value);
         const R = parseFloat(rateInput.value);
@@ -539,140 +451,124 @@
 
         // Validation
         if (!P || !R || !D) {
-          if (!P) amountInput.classList.add("error");
-          if (!R) rateInput.classList.add("error");
-          if (!D) durationInput.classList.add("error");
-          return;
+            if(!P) amountInput.classList.add('error');
+            if(!R) rateInput.classList.add('error');
+            if(!D) durationInput.classList.add('error');
+            return;
         }
 
         // Expand Container Animation
-        const container = document.getElementById("appContainer");
-        if (!container.classList.contains("show-result")) {
-          container.classList.add("show-result");
-          // Wait for transition (0.6s) then draw chart to avoid size issues
-          setTimeout(() => {
-            performCalculation(P, R, D);
-          }, 300);
+        const container = document.getElementById('appContainer');
+        if (!container.classList.contains('show-result')) {
+            container.classList.add('show-result');
+            // Wait for transition (0.6s) then draw chart to avoid size issues
+            setTimeout(() => {
+                performCalculation(P, R, D);
+            }, 300); 
         } else {
-          performCalculation(P, R, D);
+            performCalculation(P, R, D);
         }
-      }
+    }
 
-      function resetCalculator() {
+    function resetCalculator() {
         // Clear Inputs
-        document.getElementById("amount").value = "";
-        document.getElementById("rate").value = "";
-        document.getElementById("duration").value = "";
-
+        document.getElementById('amount').value = '';
+        document.getElementById('rate').value = '';
+        document.getElementById('duration').value = '';
+        
         // Remove validation errors
-        const inputs = document.querySelectorAll("input");
-        inputs.forEach((i) => i.classList.remove("error"));
+        const inputs = document.querySelectorAll('input');
+        inputs.forEach(i => i.classList.remove('error'));
 
         // Collapse Container (Smooth animation back to compact state)
-        document.getElementById("appContainer").classList.remove("show-result");
-      }
+        document.getElementById('appContainer').classList.remove('show-result');
+    }
 
-      function performCalculation(P, R, D) {
-        const unit = document.getElementById("durationUnit").value;
-        const type = document.getElementById("type").value;
-        const N = unit === "year" ? D * 12 : D;
+    function performCalculation(P, R, D) {
+        const unit = document.getElementById('durationUnit').value;
+        const type = document.getElementById('type').value;
+        const N = unit === 'year' ? D * 12 : D;
 
-        let emi = 0,
-          totalInt = 0,
-          totalPay = 0;
+        let emi = 0, totalInt = 0, totalPay = 0;
         allData = [];
 
-        if (type === "compound") {
-          const r = R / 12 / 100;
-          emi = (P * r * Math.pow(1 + r, N)) / (Math.pow(1 + r, N) - 1);
-          totalPay = emi * N;
-          totalInt = totalPay - P;
+        if (type === 'compound') {
+            const r = R / 12 / 100;
+            emi = P * r * Math.pow(1 + r, N) / (Math.pow(1 + r, N) - 1);
+            totalPay = emi * N;
+            totalInt = totalPay - P;
 
-          let bal = P;
-          for (let i = 1; i <= N; i++) {
-            let intPart = bal * r;
-            let prinPart = emi - intPart;
-            bal -= prinPart;
-            allData.push({
-              m: i,
-              p: prinPart,
-              i: intPart,
-              b: bal < 0 ? 0 : bal,
-            });
-          }
+            let bal = P;
+            for (let i = 1; i <= N; i++) {
+                let intPart = bal * r;
+                let prinPart = emi - intPart;
+                bal -= prinPart;
+                allData.push({ m: i, p: prinPart, i: intPart, b: bal < 0 ? 0 : bal });
+            }
         } else {
-          totalInt = (P * R * (N / 12)) / 100;
-          totalPay = P + totalInt;
-          emi = totalPay / N;
-          let bal = P,
-            mP = P / N,
-            mI = totalInt / N;
-          for (let i = 1; i <= N; i++) {
-            bal -= mP;
-            allData.push({ m: i, p: mP, i: mI, b: bal < 0 ? 0 : bal });
-          }
+            totalInt = (P * R * (N/12)) / 100;
+            totalPay = P + totalInt;
+            emi = totalPay / N;
+            let bal = P, mP = P/N, mI = totalInt/N;
+            for (let i = 1; i <= N; i++) {
+                bal -= mP;
+                allData.push({ m: i, p: mP, i: mI, b: bal < 0 ? 0 : bal });
+            }
         }
 
+        // Calculate Average Monthly Interest
+        const avgMonthlyInterest = totalInt / N;
+
         // Update Stats
-        document.getElementById("dispEMI").innerText = fmt(emi);
-        document.getElementById("dispInterest").innerText = fmt(totalInt);
-        document.getElementById("dispTotal").innerText = fmt(totalPay);
+        document.getElementById('dispEMI').innerText = fmt(emi);
+        document.getElementById('dispAvgInt').innerText = fmt(avgMonthlyInterest); // New Field
+        document.getElementById('dispInterest').innerText = fmt(totalInt);
+        document.getElementById('dispTotal').innerText = fmt(totalPay);
 
         // Render Chart
         drawChart(P, totalInt);
 
         // Render Table
         updateRows(); // Use helper function to get current rows value
-      }
+    }
 
-      function drawChart(p, i) {
-        const ctx = document.getElementById("emiChart").getContext("2d");
+    function drawChart(p, i) {
+        const ctx = document.getElementById('emiChart').getContext('2d');
         if (chartInstance) chartInstance.destroy();
         chartInstance = new Chart(ctx, {
-          type: "doughnut",
-          data: {
-            labels: ["Principal", "Interest"],
-            datasets: [
-              {
-                data: [p, i],
-                backgroundColor: ["#4f46e5", "#ef4444"],
-                borderWidth: 0,
-              },
-            ],
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: "75%",
-            animation: { animateScale: true, animateRotate: true },
-            plugins: {
-              legend: {
-                position: "right",
-                labels: { boxWidth: 10, font: { size: 10 } },
-              },
+            type: 'doughnut',
+            data: {
+                labels: ['Principal', 'Interest'],
+                datasets: [{ data: [p, i], backgroundColor: ['#4f46e5', '#ef4444'], borderWidth: 0 }]
             },
-          },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '75%',
+                animation: { animateScale: true, animateRotate: true },
+                plugins: { legend: { position: 'right', labels: { boxWidth: 10, font: {size: 10} } } }
+            }
         });
-      }
+    }
 
-      // Update rows when input changes
-      function updateRows() {
-        const val = parseInt(document.getElementById("rowsPerPage").value);
+    // Update rows when input changes
+    function updateRows() {
+        const val = parseInt(document.getElementById('rowsPerPage').value);
         if (val > 0) {
-          rowsPerPage = val;
-          currentPage = 1; // Reset to page 1
-          renderTable();
+            rowsPerPage = val;
+            currentPage = 1; // Reset to page 1
+            renderTable();
         }
-      }
+    }
 
-      function renderTable() {
-        const tbody = document.getElementById("tableBody");
-        tbody.innerHTML = "";
+    function renderTable() {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
         const start = (currentPage - 1) * rowsPerPage;
         const pageData = allData.slice(start, start + rowsPerPage);
 
-        pageData.forEach((d) => {
-          tbody.innerHTML += `<tr>
+        pageData.forEach(d => {
+            tbody.innerHTML += `<tr>
                 <td>${d.m}</td>
                 <td>${Math.round(d.p)}</td>
                 <td>${Math.round(d.i)}</td>
@@ -681,18 +577,18 @@
         });
 
         const totalPages = Math.ceil(allData.length / rowsPerPage);
-        document.getElementById("pageInfo").innerText = `Page ${currentPage}/${
-          totalPages || 1
-        }`;
-        document.getElementById("btnPrev").disabled = currentPage === 1;
-        document.getElementById("btnNext").disabled =
-          currentPage === totalPages || totalPages === 0;
-      }
-
-      function changePage(dir) {
+        document.getElementById('pageInfo').innerText = `Page ${currentPage}/${totalPages || 1}`;
+        document.getElementById('btnPrev').disabled = currentPage === 1;
+        document.getElementById('btnNext').disabled = currentPage === totalPages || totalPages === 0;
+    }
+    
+    function changePage(dir) {
         currentPage += dir;
         renderTable();
-      }
-    </script>
-  </body>
+    }
+</script>
+
+</body>
 </html>
+
+
